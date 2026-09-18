@@ -4,16 +4,16 @@ A cross-platform Go CLI daemon that will expose HTTP, SOCKS4a, and SOCKS5 proxy 
 
 ## Status
 
-The repository is currently at **M4 — OpenVPN and WireGuard attached interfaces**. The proxy gateway, policy layer, listener lifecycle, SSH connector, and interface-bound VPN connector are implemented; managed native VPN processes arrive in M5.
+The repository is currently at **M5 — managed OpenVPN and WireGuard clients**. The proxy gateway, policy layer, listener lifecycle, SSH connector, attached-interface connector, and managed VPN process supervisor are implemented; packaging hardening remains for M6.
 
-Implemented in M4:
+Implemented in M5:
 
-- OpenVPN and WireGuard attached-interface connectors.
-- TCP and UDP sockets bound to a configured VPN local address.
-- Interface readiness checks for named interfaces.
-- Explicit tunnel DNS resolution with no system-DNS fallback.
-- Fail-closed behavior when an interface, address, or DNS server is unavailable.
-- Linux fail-closed integration coverage and Linux/macOS/Windows cross-compilation smoke checks.
+- Explicit no-shell process commands for OpenVPN and WireGuard.
+- OpenVPN readiness detection using `Initialization Sequence Completed` plus interface readiness.
+- Unix `wg-quick up/down` lifecycle and Windows WireGuard tunnel-service lifecycle plans.
+- Bounded startup timeout and cleanup on readiness/interface failure.
+- Managed connectors delegate TCP, UDP, and DNS to the M4 interface-bound connector after readiness.
+- Deterministic fake-runner tests for lifecycle, readiness, timeout, command safety, and missing capabilities.
 
 ## Requirements
 
@@ -35,6 +35,8 @@ make platform-smoke
 ```
 
 `make integration-ssh` is optional and requires a running Docker engine; it launches a disposable `linuxserver/openssh-server` container with TCP forwarding enabled. `make platform-smoke` cross-compiles the attached-interface package for Linux amd64, macOS arm64, and Windows amd64.
+
+Managed VPN process tests use deterministic fake runners; they do not launch OpenVPN or WireGuard during the normal test suite. Validate the configured executable and profile manually on the target host before enabling managed mode.
 
 Equivalent direct commands:
 

@@ -69,6 +69,36 @@ profiles:
     interface: wg0
 ```
 
+## Managed OpenVPN and WireGuard profiles
+
+M5 can launch a native VPN client with an explicit executable and argument list, then hands traffic to the M4 attached-interface connector only after readiness succeeds. No shell is used and profile values are passed as individual arguments.
+
+```yaml
+profiles:
+  - id: managed-openvpn
+    backend: openvpn
+    mode: managed-process
+    clientPath: /usr/sbin/openvpn
+    configPath: /etc/vpnfront/client.ovpn
+    interface: tun0
+    startupTimeout: 45s
+    dns:
+      mode: remote-tcp
+      servers: ["10.8.0.1:53"]
+
+  - id: managed-wireguard
+    backend: wireguard
+    mode: managed-process
+    clientPath: /usr/bin/wg-quick
+    configPath: /etc/wireguard/corp.conf
+    interface: wg0
+    startupTimeout: 30s
+```
+
+OpenVPN starts with `--config <configPath>` and waits for `Initialization Sequence Completed` plus interface readiness. Unix-like WireGuard starts with `wg-quick up <configPath>` and stops with `wg-quick down <configPath>`. Windows uses WireGuard's `/installtunnelservice` and `/uninstalltunnelservice` commands. `clientPath` is optional and defaults to the platform command.
+
+If startup, readiness, interface discovery, or cleanup fails, the connector returns an error and never falls back to direct egress.
+
 Do not place passwords, private keys, OpenVPN profiles, or WireGuard configurations in this file. `passwordEnv` names an environment variable whose value is read only at daemon construction and is never logged.
 
 ## Attached OpenVPN and WireGuard profiles
@@ -99,7 +129,7 @@ profiles:
 TCP sockets bind their local address to the selected interface address. UDP associations bind packet sockets the same way. If an interface is missing, down, or has no usable address, connector construction fails; there is no direct-egress fallback.
 
 `dns.mode` must be explicit when DNS resolution is needed. Supported modes are `remote-tcp` and `tunnel`, both requiring `dns.servers`. If no tunnel DNS server is configured, hostname resolution fails closed instead of using the host operating system resolver.
-
+## Routing
 
 A listener has a fixed `profile` or ordered `routes`. Rules are evaluated in order:
 
@@ -142,4 +172,4 @@ Destination ACLs evaluate explicit denies, then explicit allows, then the defaul
 
 ## Current scope
 
-M4 provides strict configuration validation for attached VPN profiles, policy construction, TLS/mTLS listener setup, authentication, dynamic profile selection, daemon lifecycle, and interface-bound OpenVPN/WireGuard TCP/UDP/DNS egress. M5 will add managed native VPN client processes.
+M5 provides strict configuration validation for attached and managed VPN profiles, policy construction, TLS/mTLS listener setup, authentication, dynamic profile selection, daemon lifecycle, and interface-bound or supervised OpenVPN/WireGuard TCP/UDP/DNS egress. M6 will harden packaging and release workflows.

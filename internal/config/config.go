@@ -48,6 +48,9 @@ type ProfileConfig struct {
 	Interface      string    `json:"interface" yaml:"interface"`
 	LocalAddress   string    `json:"localAddress" yaml:"localAddress"`
 	DNS            DNSConfig `json:"dns" yaml:"dns"`
+	ClientPath     string    `json:"clientPath" yaml:"clientPath"`
+	ConfigPath     string    `json:"configPath" yaml:"configPath"`
+	StartupTimeout string    `json:"startupTimeout" yaml:"startupTimeout"`
 }
 
 type DNSConfig struct {
@@ -138,6 +141,13 @@ func decode(data []byte, extension string, cfg *Config) error {
 func (c *Config) ApplyDefaults() {
 	if c.ShutdownTimeout == "" {
 		c.ShutdownTimeout = "30s"
+	}
+	for i := range c.Profiles {
+		profile := &c.Profiles[i]
+		backend := strings.ToLower(strings.TrimSpace(profile.Backend))
+		if (backend == "openvpn" || backend == "wireguard") && profile.StartupTimeout == "" {
+			profile.StartupTimeout = "30s"
+		}
 	}
 	for i := range c.Listeners {
 		listener := &c.Listeners[i]
@@ -244,11 +254,15 @@ func validateProfile(prefix string, profile ProfileConfig) []string {
 		return nil
 	}
 	var problems []string
-	if strings.ToLower(strings.TrimSpace(profile.Mode)) != "attached-interface" {
-		problems = append(problems, prefix+".mode must be attached-interface for OpenVPN/WireGuard in M4")
+	mode := strings.ToLower(strings.TrimSpace(profile.Mode))
+	if mode != "attached-interface" && mode != "managed-process" {
+		problems = append(problems, prefix+".mode must be attached-interface or managed-process for OpenVPN/WireGuard")
 	}
 	if strings.TrimSpace(profile.Interface) == "" && strings.TrimSpace(profile.LocalAddress) == "" {
-		problems = append(problems, prefix+" requires interface or localAddress for attached VPN egress")
+		problems = append(problems, prefix+" requires interface or localAddress for VPN egress readiness")
+	}
+	if mode == "managed-process" && strings.TrimSpace(profile.ConfigPath) == "" {
+		problems = append(problems, prefix+".configPath is required for managed-process mode")
 	}
 	if profile.LocalAddress != "" && net.ParseIP(strings.TrimSpace(profile.LocalAddress)) == nil {
 		problems = append(problems, prefix+".localAddress must be an IP address")
@@ -258,6 +272,11 @@ func validateProfile(prefix string, profile ProfileConfig) []string {
 	}
 	if profile.DNS.Mode != "" && len(profile.DNS.Servers) == 0 {
 		problems = append(problems, prefix+".dns.servers is required when dns.mode is configured")
+	}
+	if mode == "managed-process" {
+		if timeout, err := time.ParseDuration(profile.StartupTimeout); err != nil || timeout <= 0 {
+			problems = append(problems, prefix+".startupTimeout must be a positive duration")
+		}
 	}
 	return problems
 }

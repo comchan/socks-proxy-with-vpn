@@ -179,7 +179,7 @@ profiles:
 | M2 | Policy, configuration, and daemon lifecycle | Achieved | `milestone/m2-policy-config-lifecycle` | Config rejection tests, TLS/auth/ACL tests, dynamic-routing tests, graceful shutdown test | `8476159b91b79c0a23d1a79d4647abadc94b2d69` |
 | M3 | SSH tunnel backend | Achieved | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | `93ddb52a07b2d01caeaf0d9d7c0672a2656a4a98` |
 | M4 | OpenVPN and WireGuard attached interfaces | Achieved | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | `69a5390b3326fd30edbaa220f9e1a1c37eefcb2b` |
-| M5 | Managed OpenVPN and WireGuard clients | Planned | `milestone/m5-managed-vpn-clients` | Client lifecycle tests, readiness parsing tests, missing-capability failure tests | — |
+| M5 | Managed OpenVPN and WireGuard clients | Achieved | `milestone/m5-managed-vpn-clients` | Client lifecycle tests, readiness parsing tests, missing-capability failure tests | pending milestone commit |
 | M6 | Packaging, release, and hardening | Planned | `milestone/m6-packaging-release-hardening` | Platform matrix build, SBOM/license audit, load/failure tests | — |
 
 ### M0 — Foundation and Go project scaffold
@@ -244,6 +244,20 @@ profiles:
   - Attached-interface TCP/UDP binding, DNS no-fallback, missing-interface, and close-state tests passed on macOS arm64.
   - Privileged Linux integration test is included under `linux && integration`; execution is deferred because this host is macOS.
 - Notes: Added interface-bound OpenVPN/WireGuard connectors, explicit tunnel DNS resolution, fail-closed interface readiness, and factory wiring. M5 will add managed native VPN client processes.
+
+### M5 — Managed OpenVPN and WireGuard clients
+
+- Status: Achieved
+- Branch: `milestone/m5-managed-vpn-clients`
+- Commit: pending milestone commit
+- Completed: `2026-09-18T16:44:29Z`
+- Validation:
+  - `make check` — passed Go version gate, formatting, all package tests, `go vet`, and pinned `golangci-lint` with 0 issues.
+  - `go test -race ./... -count=1 -timeout 150s` — passed repository race checks.
+  - `make integration-ssh` — passed SSH regression integration in 5.22s.
+  - `make platform-smoke` — passed Linux amd64, macOS arm64, and Windows amd64 attached-interface cross-compilation.
+  - Managed fake-runner tests passed command safety, OpenVPN readiness, WireGuard up/down lifecycle, startup timeout, cleanup, and missing-interface checks.
+- Notes: Added explicit no-shell command planning, process supervision, readiness parsing, bounded startup/cleanup, managed OpenVPN and platform-specific WireGuard lifecycle, and factory wiring. M6 remains for packaging and release hardening.
 
 ### Milestone completion record template
 

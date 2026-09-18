@@ -110,7 +110,7 @@ func TestValidateAttachedVPNProfileRequiresInterfaceAndTunnelDNS(t *testing.T) {
 		t.Fatal(err)
 	}
 	cfg.Profiles[0].Mode = "managed-process"
-	if err := cfg.Validate(); err == nil || !strings.Contains(err.Error(), "attached-interface") {
-		t.Fatalf("error = %v, want attached-interface rejection", err)
+	if err := cfg.Validate(); err == nil || !strings.Contains(err.Error(), "configPath") {
+		t.Fatalf("error = %v, want managed configPath rejection", err)
 	}
 }
