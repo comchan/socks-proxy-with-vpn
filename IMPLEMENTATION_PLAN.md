@@ -177,7 +177,7 @@ profiles:
 | M0 | Foundation and Go project scaffold | Achieved | `milestone/m0-foundation-project-scaffold` | Go 1.24+ toolchain check, `go vet ./...`, `go test ./...`, pinned linter, CLI smoke test | `fd26eeba3f8787277da83f0b2071e21bd139b666` |
 | M1 | HTTP and SOCKS gateway core | Achieved | `milestone/m1-http-socks-gateway-core` | TCP and UDP-association protocol fixtures, duplex/backpressure tests, error mapping tests | `dfecb2b1e1539043919322024b51d7be8b3d78de` |
 | M2 | Policy, configuration, and daemon lifecycle | Achieved | `milestone/m2-policy-config-lifecycle` | Config rejection tests, TLS/auth/ACL tests, dynamic-routing tests, graceful shutdown test | `8476159b91b79c0a23d1a79d4647abadc94b2d69` |
-| M3 | SSH tunnel backend | Planned | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | — |
+| M3 | SSH tunnel backend | Achieved | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | pending milestone commit |
 | M4 | OpenVPN and WireGuard attached interfaces | Planned | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | — |
 | M5 | Managed OpenVPN and WireGuard clients | Planned | `milestone/m5-managed-vpn-clients` | Client lifecycle tests, readiness parsing tests, missing-capability failure tests | — |
 | M6 | Packaging, release, and hardening | Planned | `milestone/m6-packaging-release-hardening` | Platform matrix build, SBOM/license audit, load/failure tests | — |
@@ -216,6 +216,19 @@ profiles:
   - `go test -race ./... -count=1 -timeout 90s` — passed concurrent routing, listener lifecycle, TLS/auth, and shutdown checks.
   - `make smoke` — printed `vpnfront dev`.
 - Notes: Added strict YAML/JSON configuration, `--validate-config`, environment-backed Basic authentication, TLS/mTLS listener setup, source and destination ACLs, metadata protection, ordered CIDR/domain/default routing, daemon lifecycle with bounded shutdown, and a public-listener TLS/auth/ACL integration test. Real SSH/OpenVPN/WireGuard connectors remain outside M2.
+
+### M3 — SSH tunnel backend
+
+- Status: Achieved
+- Branch: `milestone/m3-ssh-tunnel-backend`
+- Commit: pending milestone commit
+- Completed: `2026-09-18T16:20:31Z`
+- Validation:
+  - `make check` — passed Go version gate, formatting, all package tests, `go vet`, and pinned `golangci-lint` with 0 issues.
+  - `go test -race ./... -count=1 -timeout 120s` — passed repository race checks.
+  - `make integration-ssh` — passed disposable Docker/OpenSSH direct-tcpip forwarding in 4.38s.
+  - Strict host-key mismatch, missing-known-hosts, canceled context, and explicit SSH UDP rejection tests passed.
+- Notes: Added `golang.org/x/crypto v0.41.0`, preserving Go 1.24+ compatibility. The connector supports private-key authentication, strict `known_hosts`, TCP direct-tcpip, remote hostname preservation, and typed UDP unsupported errors; `internal/tunnels.NewConnector` selects the SSH backend explicitly. OpenVPN/WireGuard adapters remain outside M3.
 
 ### Milestone completion record template
 

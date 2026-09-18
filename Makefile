@@ -4,7 +4,7 @@ GO ?= go
 GOLANGCI_LINT ?= golangci-lint
 GOLANGCI_LINT_VERSION := 2.13.2
 
-.PHONY: go-version fmt test vet lint check smoke
+.PHONY: go-version fmt test vet lint check smoke integration-ssh
 
 go-version:
 	@version="$$($(GO) env GOVERSION | sed 's/^go//')"; \
@@ -34,3 +34,6 @@ check: go-version fmt test vet lint
 
 smoke:
 	$(GO) run ./cmd/vpnfront --version
+
+integration-ssh:
+	$(GO) test -tags=integration ./internal/tunnels/ssh -run TestOpenTCPThroughOpenSSHContainer -count=1 -timeout 3m

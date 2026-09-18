@@ -4,17 +4,16 @@ A cross-platform Go CLI daemon that will expose HTTP, SOCKS4a, and SOCKS5 proxy 
 
 ## Status
 
-The repository is currently at **M1 — HTTP and SOCKS gateway core**. The protocol handlers are implemented against a small egress connector seam; listener lifecycle, authentication, policy, and real tunnel backends arrive in later milestones.
+The repository is currently at **M3 — SSH tunnel backend**. The proxy gateway, policy layer, listener lifecycle, and SSH direct-tcpip connector are implemented; OpenVPN and WireGuard adapters arrive in later milestones.
 
-Implemented in M1:
+Implemented in M3:
 
-- HTTP forward proxy with origin-form upstream requests.
-- HTTP `CONNECT` TCP tunnelling.
-- SOCKS4 and SOCKS4a `CONNECT`.
-- SOCKS5 unauthenticated negotiation and `CONNECT`.
-- SOCKS5 `UDP ASSOCIATE`, including IPv4, IPv6, and domain targets through profile-scoped resolution.
-- Explicit rejection of SOCKS5 `BIND`, unsupported authentication, and fragmented UDP datagrams.
-- Bidirectional relay with cancellation and half-close handling.
+- Strict SSH `known_hosts` verification; missing or mismatched host keys fail closed.
+- Private-key authentication from a file path; passwords and static credentials are not accepted.
+- Context-aware SSH connection and direct-tcpip dialing.
+- Remote hostname preservation for SSH-side resolution.
+- Explicit typed rejection of UDP for standard SSH forwarding.
+- Disposable in-memory SSH server tests and an optional Docker/OpenSSH integration test.
 
 ## Requirements
 
@@ -31,7 +30,10 @@ The required Go tool and linter versions are recorded in `go.mod` and `.golangci
 ```sh
 make check
 make smoke
+make integration-ssh
 ```
+
+`make integration-ssh` is optional and requires a running Docker engine; it launches a disposable `linuxserver/openssh-server` container with TCP forwarding enabled.
 
 Equivalent direct commands:
 
