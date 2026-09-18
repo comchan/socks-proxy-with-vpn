@@ -174,7 +174,7 @@ profiles:
 
 | ID | Milestone | Status | Required branch | Required validation | Commit |
 |---|---|---|---|---|---|
-| M0 | Foundation and Go project scaffold | Achieved | `milestone/m0-foundation-project-scaffold` | Go 1.24+ toolchain check, `go vet ./...`, `go test ./...`, pinned linter, CLI smoke test | pending milestone commit |
+| M0 | Foundation and Go project scaffold | Achieved | `milestone/m0-foundation-project-scaffold` | Go 1.24+ toolchain check, `go vet ./...`, `go test ./...`, pinned linter, CLI smoke test | `fd26eeba3f8787277da83f0b2071e21bd139b666` |
 | M1 | HTTP and SOCKS gateway core | Planned | `milestone/m1-http-socks-gateway-core` | TCP and UDP-association protocol fixtures, duplex/backpressure tests, error mapping tests | — |
 | M2 | Policy, configuration, and daemon lifecycle | Planned | `milestone/m2-policy-config-lifecycle` | Config rejection tests, TLS/auth/ACL tests, dynamic-routing tests, graceful shutdown test | — |
 | M3 | SSH tunnel backend | Planned | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | — |
@@ -186,7 +186,7 @@ profiles:
 
 - Status: Achieved
 - Branch: `milestone/m0-foundation-project-scaffold`
-- Commit: pending milestone commit
+- Commit: `fd26eeba3f8787277da83f0b2071e21bd139b666`
 - Completed: `2026-09-18T09:54:43Z`
 - Validation:
   - `make check` — passed Go version gate, formatting, tests, `go vet`, and pinned `golangci-lint` with 0 issues.
