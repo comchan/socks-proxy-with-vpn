@@ -22,6 +22,11 @@ func (g *Gateway) ServeHTTP(ctx context.Context, conn net.Conn) error {
 		return protocolError("read HTTP proxy request", err)
 	}
 
+	if err := g.authorizeHTTP(request); err != nil {
+		_ = writeHTTPAuthRequired(conn, g.authChallenge())
+		return protocolError("authenticate HTTP proxy request", err)
+	}
+
 	if strings.EqualFold(request.Method, http.MethodConnect) {
 		return g.serveConnect(ctx, conn, reader, request)
 	}
@@ -34,7 +39,10 @@ func (g *Gateway) serveConnect(ctx context.Context, client net.Conn, reader *buf
 		_ = writeHTTPError(client, http.StatusBadRequest, "invalid CONNECT destination")
 		return protocolError("parse CONNECT destination", err)
 	}
-
+	if err := g.authorizeDestination(destination); err != nil {
+		_ = writeHTTPError(client, http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		return protocolError("authorize CONNECT destination", err)
+	}
 	upstream, err := g.openTCP(ctx, destination)
 	if err != nil {
 		_ = writeHTTPGatewayError(client, err)
@@ -62,7 +70,10 @@ func (g *Gateway) serveForward(ctx context.Context, client net.Conn, request *ht
 		_ = writeHTTPError(client, http.StatusBadRequest, "invalid proxy destination")
 		return protocolError("parse HTTP destination", err)
 	}
-
+	if err := g.authorizeDestination(destination); err != nil {
+		_ = writeHTTPError(client, http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		return protocolError("authorize HTTP destination", err)
+	}
 	upstream, err := g.openTCP(ctx, destination)
 	if err != nil {
 		_ = writeHTTPGatewayError(client, err)
@@ -77,6 +88,7 @@ func (g *Gateway) serveForward(ctx context.Context, client net.Conn, request *ht
 	request.RequestURI = ""
 	request.Close = true
 	request.Header.Del("Proxy-Connection")
+	request.Header.Del("Proxy-Authorization")
 	request.Header.Set("Connection", "close")
 	if err := request.Write(upstream); err != nil {
 		return protocolError("write HTTP upstream request", err)
@@ -89,6 +101,18 @@ func (g *Gateway) serveForward(ctx context.Context, client net.Conn, request *ht
 
 func writeHTTPError(conn net.Conn, status int, message string) error {
 	response := fmt.Sprintf("HTTP/1.1 %d %s\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", status, http.StatusText(status), len(message), message)
+	return writeFull(conn, []byte(response))
+}
+
+func (g *Gateway) authChallenge() string {
+	if g != nil && g.Authenticator != nil && g.Authenticator.HTTPChallenge() != "" {
+		return g.Authenticator.HTTPChallenge()
+	}
+	return `Basic realm="vpnfront"`
+}
+
+func writeHTTPAuthRequired(conn net.Conn, challenge string) error {
+	response := fmt.Sprintf("HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: %s\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", challenge)
 	return writeFull(conn, []byte(response))
 }
 

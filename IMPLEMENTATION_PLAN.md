@@ -176,7 +176,7 @@ profiles:
 |---|---|---|---|---|---|
 | M0 | Foundation and Go project scaffold | Achieved | `milestone/m0-foundation-project-scaffold` | Go 1.24+ toolchain check, `go vet ./...`, `go test ./...`, pinned linter, CLI smoke test | `fd26eeba3f8787277da83f0b2071e21bd139b666` |
 | M1 | HTTP and SOCKS gateway core | Achieved | `milestone/m1-http-socks-gateway-core` | TCP and UDP-association protocol fixtures, duplex/backpressure tests, error mapping tests | `dfecb2b1e1539043919322024b51d7be8b3d78de` |
-| M2 | Policy, configuration, and daemon lifecycle | Planned | `milestone/m2-policy-config-lifecycle` | Config rejection tests, TLS/auth/ACL tests, dynamic-routing tests, graceful shutdown test | — |
+| M2 | Policy, configuration, and daemon lifecycle | Achieved | `milestone/m2-policy-config-lifecycle` | Config rejection tests, TLS/auth/ACL tests, dynamic-routing tests, graceful shutdown test | pending milestone commit |
 | M3 | SSH tunnel backend | Planned | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | — |
 | M4 | OpenVPN and WireGuard attached interfaces | Planned | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | — |
 | M5 | Managed OpenVPN and WireGuard clients | Planned | `milestone/m5-managed-vpn-clients` | Client lifecycle tests, readiness parsing tests, missing-capability failure tests | — |
@@ -204,6 +204,18 @@ profiles:
   - `go test -race ./...` — passed concurrent relay and UDP-association race checks.
   - `make smoke` — printed `vpnfront dev`.
 - Notes: Added HTTP forward/CONNECT, SOCKS4/SOCKS4a, SOCKS5 CONNECT/UDP ASSOCIATE, typed egress failures, profile-scoped UDP DNS resolution, bidirectional relay, and fake-connector protocol fixtures. Authentication, policy, listener lifecycle, and real tunnel adapters remain outside M1.
+
+### M2 — Policy, configuration, and daemon lifecycle
+
+- Status: Achieved
+- Branch: `milestone/m2-policy-config-lifecycle`
+- Commit: pending milestone commit
+- Completed: `2026-09-18T16:04:08Z`
+- Validation:
+  - `make check` — passed Go version gate, formatting, tests, `go vet`, and pinned `golangci-lint` with 0 issues.
+  - `go test -race ./... -count=1 -timeout 90s` — passed concurrent routing, listener lifecycle, TLS/auth, and shutdown checks.
+  - `make smoke` — printed `vpnfront dev`.
+- Notes: Added strict YAML/JSON configuration, `--validate-config`, environment-backed Basic authentication, TLS/mTLS listener setup, source and destination ACLs, metadata protection, ordered CIDR/domain/default routing, daemon lifecycle with bounded shutdown, and a public-listener TLS/auth/ACL integration test. Real SSH/OpenVPN/WireGuard connectors remain outside M2.
 
 ### Milestone completion record template
 

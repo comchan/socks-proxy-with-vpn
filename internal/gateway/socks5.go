@@ -18,6 +18,7 @@ import (
 const (
 	socks5Version             = 0x05
 	socks5NoAuth              = 0x00
+	socks5UsernamePassword    = 0x02
 	socks5NoAcceptableMethods = 0xff
 	socks5Connect             = 0x01
 	socks5UDPAssociate        = 0x03
@@ -41,7 +42,7 @@ var errUnsupportedAddressType = errors.New("SOCKS5 address type is not supported
 // unauthenticated method; listener authentication is introduced in M2.
 func (g *Gateway) ServeSOCKS5(ctx context.Context, conn net.Conn) error {
 	reader := bufio.NewReader(conn)
-	if err := negotiateSOCKS5(reader, conn); err != nil {
+	if err := negotiateSOCKS5(reader, conn, g.Authenticator); err != nil {
 		return protocolError("SOCKS5 method negotiation", err)
 	}
 
@@ -62,7 +63,7 @@ func (g *Gateway) ServeSOCKS5(ctx context.Context, conn net.Conn) error {
 	}
 }
 
-func negotiateSOCKS5(reader *bufio.Reader, conn net.Conn) error {
+func negotiateSOCKS5(reader *bufio.Reader, conn net.Conn, auth Authenticator) error {
 	header := make([]byte, 2)
 	if _, err := io.ReadFull(reader, header); err != nil {
 		return err
@@ -74,8 +75,15 @@ func negotiateSOCKS5(reader *bufio.Reader, conn net.Conn) error {
 	if _, err := io.ReadFull(reader, methods); err != nil {
 		return err
 	}
+	requiresAuth := auth != nil && auth.Required()
 	for _, method := range methods {
-		if method == socks5NoAuth {
+		if requiresAuth && method == socks5UsernamePassword {
+			if err := writeFull(conn, []byte{socks5Version, socks5UsernamePassword}); err != nil {
+				return err
+			}
+			return authenticateSOCKS5UserPass(reader, conn, auth)
+		}
+		if !requiresAuth && method == socks5NoAuth {
 			return writeFull(conn, []byte{socks5Version, socks5NoAuth})
 		}
 	}
@@ -83,6 +91,41 @@ func negotiateSOCKS5(reader *bufio.Reader, conn net.Conn) error {
 		return err
 	}
 	return errors.New("no acceptable SOCKS5 authentication method")
+}
+
+func authenticateSOCKS5UserPass(reader *bufio.Reader, conn net.Conn, auth Authenticator) error {
+	header := make([]byte, 2)
+	if _, err := io.ReadFull(reader, header); err != nil {
+		return err
+	}
+	if header[0] != 0x01 || header[1] == 0 {
+		_ = writeFull(conn, []byte{0x01, 0x01})
+		return errors.New("invalid SOCKS5 username/password request")
+	}
+	username := make([]byte, int(header[1]))
+	if _, err := io.ReadFull(reader, username); err != nil {
+		return err
+	}
+	passwordLength, err := reader.ReadByte()
+	if err != nil {
+		return err
+	}
+	if passwordLength == 0 {
+		_ = writeFull(conn, []byte{0x01, 0x01})
+		return errors.New("empty SOCKS5 password")
+	}
+	password := make([]byte, int(passwordLength))
+	if _, err := io.ReadFull(reader, password); err != nil {
+		return err
+	}
+	if !auth.AuthenticateSOCKS5(string(username), string(password)) {
+		_ = writeFull(conn, []byte{0x01, 0x01})
+		return errors.New("invalid SOCKS5 credentials")
+	}
+	if err := writeFull(conn, []byte{0x01, 0x00}); err != nil {
+		return err
+	}
+	return nil
 }
 
 type socks5Request struct {
@@ -156,6 +199,10 @@ func (g *Gateway) serveSOCKS5Connect(ctx context.Context, conn net.Conn, reader 
 		err := errors.New("SOCKS5 CONNECT destination is invalid")
 		_ = writeSOCKS5Reply(conn, socks5GeneralFailure, nil)
 		return err
+	}
+	if err := g.authorizeDestination(destination); err != nil {
+		_ = writeSOCKS5Reply(conn, socks5ConnectionRefused, nil)
+		return protocolError("authorize SOCKS5 destination", err)
 	}
 	upstream, err := g.openTCP(ctx, destination)
 	if err != nil {
@@ -258,6 +305,9 @@ func (g *Gateway) relayClientDatagrams(ctx context.Context, relay, egressConn ne
 		destination, payload, err := parseSOCKS5UDPDatagram(buffer[:count])
 		if err != nil {
 			// SOCKS5 UDP has no response channel for malformed datagrams.
+			continue
+		}
+		if err := g.authorizeDestination(destination); err != nil {
 			continue
 		}
 		address, err := g.resolveUDPAddress(ctx, destination)

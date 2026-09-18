@@ -70,7 +70,7 @@ func TestServeHTTPForwardRequestUsesOriginForm(t *testing.T) {
 	})
 	t.Cleanup(func() { _ = upstreamServer.Close() })
 
-	request := "GET http://origin.example:8080/path?q=1 HTTP/1.1\r\nHost: origin.example:8080\r\nProxy-Connection: keep-alive\r\n\r\n"
+	request := "GET http://origin.example:8080/path?q=1 HTTP/1.1\r\nHost: origin.example:8080\r\nProxy-Connection: keep-alive\r\nProxy-Authorization: Basic cHJveHk6c2VjcmV0\r\n\r\n"
 	if _, err := client.Write([]byte(request)); err != nil {
 		t.Fatal(err)
 	}
@@ -87,6 +87,9 @@ func TestServeHTTPForwardRequestUsesOriginForm(t *testing.T) {
 	}
 	if upstreamRequest.Header.Get("Proxy-Connection") != "" {
 		t.Fatal("Proxy-Connection header was forwarded")
+	}
+	if upstreamRequest.Header.Get("Proxy-Authorization") != "" {
+		t.Fatal("Proxy-Authorization header was forwarded")
 	}
 	if !upstreamRequest.Close {
 		t.Fatal("upstream request should close after one M1 request")

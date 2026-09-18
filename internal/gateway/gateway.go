@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 
 	"github.com/comchan/socks-proxy-thru-wireguard/internal/domain"
 	"github.com/comchan/socks-proxy-thru-wireguard/internal/egress"
@@ -14,9 +15,22 @@ import (
 
 type UDPBindFunc func(network string, address *net.UDPAddr) (net.PacketConn, error)
 
+type Authenticator interface {
+	Required() bool
+	AuthenticateHTTP(*http.Request) bool
+	AuthenticateSOCKS5(username, password string) bool
+	HTTPChallenge() string
+}
+
+type DestinationPolicy interface {
+	Allow(domain.Destination) error
+}
+
 type Gateway struct {
-	Connector egress.Connector
-	UDPBind   UDPBindFunc
+	Connector      egress.Connector
+	UDPBind        UDPBindFunc
+	Authenticator  Authenticator
+	DestinationACL DestinationPolicy
 }
 
 func New(connector egress.Connector) *Gateway {
@@ -28,6 +42,20 @@ func New(connector egress.Connector) *Gateway {
 
 func defaultUDPBind(network string, address *net.UDPAddr) (net.PacketConn, error) {
 	return net.ListenUDP(network, address)
+}
+
+func (g *Gateway) authorizeHTTP(request *http.Request) error {
+	if g != nil && g.Authenticator != nil && g.Authenticator.Required() && !g.Authenticator.AuthenticateHTTP(request) {
+		return errors.New("proxy authentication required")
+	}
+	return nil
+}
+
+func (g *Gateway) authorizeDestination(destination domain.Destination) error {
+	if g != nil && g.DestinationACL != nil {
+		return g.DestinationACL.Allow(destination)
+	}
+	return nil
 }
 
 func (g *Gateway) openTCP(ctx context.Context, destination domain.Destination) (net.Conn, error) {

@@ -48,6 +48,14 @@ Expected smoke output:
 vpnfront dev
 ```
 
+Validate a strict YAML or JSON configuration file before use:
+
+```sh
+go run ./cmd/vpnfront --validate-config /path/to/proxy.yaml
+```
+
+See [`docs/configuration.md`](docs/configuration.md) for listener security, authentication, ACL, and dynamic-routing rules.
+
 ## Design direction
 
 The proxy data plane will depend on a small egress connector interface. Protocol handlers will request TCP connections, UDP packet sockets, or profile-scoped DNS resolution without knowing whether the selected profile uses SSH, WireGuard, or OpenVPN. A selected tunnel is fail-closed: it never silently falls back to direct egress.

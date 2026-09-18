@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -37,6 +38,10 @@ func (g *Gateway) ServeSOCKS4(ctx context.Context, conn net.Conn) error {
 		return protocolError("read SOCKS4 user ID", err)
 	}
 	_ = userID // Authentication is introduced in M2.
+	if g != nil && g.Authenticator != nil && g.Authenticator.Required() {
+		_ = writeSOCKS4Reply(conn, socks4Rejected)
+		return errors.New("SOCKS4 requires mutual TLS for authenticated listeners")
+	}
 	if header[1] != socks4Connect {
 		_ = writeSOCKS4Reply(conn, socks4Rejected)
 		return fmt.Errorf("unsupported SOCKS4 command %d", header[1])
@@ -56,6 +61,10 @@ func (g *Gateway) ServeSOCKS4(ctx context.Context, conn net.Conn) error {
 		}
 	}
 	destination := domain.Destination{Host: host, Port: port}
+	if err := g.authorizeDestination(destination); err != nil {
+		_ = writeSOCKS4Reply(conn, socks4Rejected)
+		return protocolError("authorize SOCKS4 destination", err)
+	}
 	upstream, err := g.openTCP(ctx, destination)
 	if err != nil {
 		_ = writeSOCKS4Reply(conn, socks4Rejected)

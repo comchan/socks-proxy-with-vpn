@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/comchan/socks-proxy-thru-wireguard/internal/config"
 	"github.com/comchan/socks-proxy-thru-wireguard/internal/version"
 )
 
@@ -28,6 +29,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("vpnfront", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	showVersion := flags.Bool("version", false, "print the version and exit")
+	validateConfig := flags.String("validate-config", "", "validate a YAML or JSON configuration file")
 	flags.Usage = func() {
 		writeText(stderr, usage)
 		flags.PrintDefaults()
@@ -41,6 +43,18 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 		return 2
+	}
+	if *validateConfig != "" {
+		if _, err := config.Load(*validateConfig); err != nil {
+			if !writef(stderr, "invalid configuration: %v\n", err) {
+				return 1
+			}
+			return 2
+		}
+		if !writef(stdout, "configuration valid\n") {
+			return 1
+		}
+		return 0
 	}
 	if *showVersion {
 		if !writef(stdout, "vpnfront %s\n", version.Value) {

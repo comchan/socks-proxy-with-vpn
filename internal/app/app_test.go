@@ -3,6 +3,8 @@ package app
 import (
 	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -55,5 +57,35 @@ func TestRunHonorsCanceledContext(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "context canceled") {
 		t.Fatalf("stderr = %q, want context cancellation", stderr.String())
+	}
+}
+
+func TestRunValidatesConfiguration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "proxy.yaml")
+	data := []byte("listeners:\n  - id: local\n    protocol: socks5\n    profile: test\nprofiles:\n  - id: test\n    backend: fake\n")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	if got := Run(context.Background(), []string{"--validate-config", path}, &stdout, &stderr); got != 0 {
+		t.Fatalf("Run() exit code = %d, want 0; stderr=%q", got, stderr.String())
+	}
+	if got, want := stdout.String(), "configuration valid\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+}
+
+func TestRunRejectsInvalidConfiguration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "proxy.yaml")
+	data := []byte("listeners: []\nprofiles: []\n")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	if got := Run(context.Background(), []string{"--validate-config", path}, &stdout, &stderr); got != 2 {
+		t.Fatalf("Run() exit code = %d, want 2", got)
+	}
+	if !strings.Contains(stderr.String(), "invalid configuration") {
+		t.Fatalf("stderr = %q, want validation error", stderr.String())
 	}
 }
