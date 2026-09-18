@@ -175,7 +175,7 @@ profiles:
 | ID | Milestone | Status | Required branch | Required validation | Commit |
 |---|---|---|---|---|---|
 | M0 | Foundation and Go project scaffold | Achieved | `milestone/m0-foundation-project-scaffold` | Go 1.24+ toolchain check, `go vet ./...`, `go test ./...`, pinned linter, CLI smoke test | `fd26eeba3f8787277da83f0b2071e21bd139b666` |
-| M1 | HTTP and SOCKS gateway core | Achieved | `milestone/m1-http-socks-gateway-core` | TCP and UDP-association protocol fixtures, duplex/backpressure tests, error mapping tests | pending milestone commit |
+| M1 | HTTP and SOCKS gateway core | Achieved | `milestone/m1-http-socks-gateway-core` | TCP and UDP-association protocol fixtures, duplex/backpressure tests, error mapping tests | `dfecb2b1e1539043919322024b51d7be8b3d78de` |
 | M2 | Policy, configuration, and daemon lifecycle | Planned | `milestone/m2-policy-config-lifecycle` | Config rejection tests, TLS/auth/ACL tests, dynamic-routing tests, graceful shutdown test | — |
 | M3 | SSH tunnel backend | Planned | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | — |
 | M4 | OpenVPN and WireGuard attached interfaces | Planned | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | — |
@@ -197,7 +197,7 @@ profiles:
 
 - Status: Achieved
 - Branch: `milestone/m1-http-socks-gateway-core`
-- Commit: pending milestone commit
+- Commit: `dfecb2b1e1539043919322024b51d7be8b3d78de`
 - Completed: `2026-09-18T10:10:01Z`
 - Validation:
   - `make check` — passed Go version gate, formatting, `go test ./...`, `go vet ./...`, and pinned `golangci-lint` with 0 issues.
