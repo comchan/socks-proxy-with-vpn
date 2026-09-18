@@ -178,7 +178,7 @@ profiles:
 | M1 | HTTP and SOCKS gateway core | Achieved | `milestone/m1-http-socks-gateway-core` | TCP and UDP-association protocol fixtures, duplex/backpressure tests, error mapping tests | `dfecb2b1e1539043919322024b51d7be8b3d78de` |
 | M2 | Policy, configuration, and daemon lifecycle | Achieved | `milestone/m2-policy-config-lifecycle` | Config rejection tests, TLS/auth/ACL tests, dynamic-routing tests, graceful shutdown test | `8476159b91b79c0a23d1a79d4647abadc94b2d69` |
 | M3 | SSH tunnel backend | Achieved | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | `93ddb52a07b2d01caeaf0d9d7c0672a2656a4a98` |
-| M4 | OpenVPN and WireGuard attached interfaces | Achieved | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | pending milestone commit |
+| M4 | OpenVPN and WireGuard attached interfaces | Achieved | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | `69a5390b3326fd30edbaa220f9e1a1c37eefcb2b` |
 | M5 | Managed OpenVPN and WireGuard clients | Planned | `milestone/m5-managed-vpn-clients` | Client lifecycle tests, readiness parsing tests, missing-capability failure tests | — |
 | M6 | Packaging, release, and hardening | Planned | `milestone/m6-packaging-release-hardening` | Platform matrix build, SBOM/license audit, load/failure tests | — |
 
@@ -234,7 +234,7 @@ profiles:
 
 - Status: Achieved
 - Branch: `milestone/m4-vpn-attached-interface`
-- Commit: pending milestone commit
+- Commit: `69a5390b3326fd30edbaa220f9e1a1c37eefcb2b`
 - Completed: `2026-09-18T16:31:51Z`
 - Validation:
   - `make check` — passed Go version gate, formatting, all package tests, `go vet`, and pinned `golangci-lint` with 0 issues.
