@@ -37,16 +37,22 @@ type ListenerConfig struct {
 }
 
 type ProfileConfig struct {
-	ID             string `json:"id" yaml:"id"`
-	Backend        string `json:"backend" yaml:"backend"`
-	Mode           string `json:"mode" yaml:"mode"`
-	Host           string `json:"host" yaml:"host"`
-	Port           uint16 `json:"port" yaml:"port"`
-	User           string `json:"user" yaml:"user"`
-	PrivateKeyPath string `json:"privateKeyPath" yaml:"privateKeyPath"`
-	KnownHostsPath string `json:"knownHostsPath" yaml:"knownHostsPath"`
-	Interface      string `json:"interface" yaml:"interface"`
-	LocalAddress   string `json:"localAddress" yaml:"localAddress"`
+	ID             string    `json:"id" yaml:"id"`
+	Backend        string    `json:"backend" yaml:"backend"`
+	Mode           string    `json:"mode" yaml:"mode"`
+	Host           string    `json:"host" yaml:"host"`
+	Port           uint16    `json:"port" yaml:"port"`
+	User           string    `json:"user" yaml:"user"`
+	PrivateKeyPath string    `json:"privateKeyPath" yaml:"privateKeyPath"`
+	KnownHostsPath string    `json:"knownHostsPath" yaml:"knownHostsPath"`
+	Interface      string    `json:"interface" yaml:"interface"`
+	LocalAddress   string    `json:"localAddress" yaml:"localAddress"`
+	DNS            DNSConfig `json:"dns" yaml:"dns"`
+}
+
+type DNSConfig struct {
+	Mode    string   `json:"mode" yaml:"mode"`
+	Servers []string `json:"servers" yaml:"servers"`
 }
 
 type TLSConfig struct {
@@ -176,6 +182,7 @@ func (c Config) Validate() error {
 		if strings.TrimSpace(profile.Backend) == "" {
 			problems = append(problems, prefix+".backend is required")
 		}
+		problems = append(problems, validateProfile(prefix, profile)...)
 		if _, exists := profiles[profile.ID]; exists {
 			problems = append(problems, "duplicate profile id "+profile.ID)
 		}
@@ -229,6 +236,30 @@ func (c Config) Validate() error {
 		return errors.New("invalid configuration:\n- " + strings.Join(problems, "\n- "))
 	}
 	return nil
+}
+
+func validateProfile(prefix string, profile ProfileConfig) []string {
+	backend := strings.ToLower(strings.TrimSpace(profile.Backend))
+	if backend != "openvpn" && backend != "wireguard" {
+		return nil
+	}
+	var problems []string
+	if strings.ToLower(strings.TrimSpace(profile.Mode)) != "attached-interface" {
+		problems = append(problems, prefix+".mode must be attached-interface for OpenVPN/WireGuard in M4")
+	}
+	if strings.TrimSpace(profile.Interface) == "" && strings.TrimSpace(profile.LocalAddress) == "" {
+		problems = append(problems, prefix+" requires interface or localAddress for attached VPN egress")
+	}
+	if profile.LocalAddress != "" && net.ParseIP(strings.TrimSpace(profile.LocalAddress)) == nil {
+		problems = append(problems, prefix+".localAddress must be an IP address")
+	}
+	if profile.DNS.Mode != "" && profile.DNS.Mode != "remote-tcp" && profile.DNS.Mode != "tunnel" {
+		problems = append(problems, prefix+".dns.mode must be remote-tcp or tunnel")
+	}
+	if profile.DNS.Mode != "" && len(profile.DNS.Servers) == 0 {
+		problems = append(problems, prefix+".dns.servers is required when dns.mode is configured")
+	}
+	return problems
 }
 
 func validateTLS(prefix string, tlsConfig *TLSConfig) []string {

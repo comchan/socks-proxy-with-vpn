@@ -4,7 +4,7 @@ GO ?= go
 GOLANGCI_LINT ?= golangci-lint
 GOLANGCI_LINT_VERSION := 2.13.2
 
-.PHONY: go-version fmt test vet lint check smoke integration-ssh
+.PHONY: go-version fmt test vet lint check smoke integration-ssh platform-smoke
 
 go-version:
 	@version="$$($(GO) env GOVERSION | sed 's/^go//')"; \
@@ -37,3 +37,9 @@ smoke:
 
 integration-ssh:
 	$(GO) test -tags=integration ./internal/tunnels/ssh -run TestOpenTCPThroughOpenSSHContainer -count=1 -timeout 3m
+
+platform-smoke:
+	@mkdir -p .tmp/platform-smoke
+	GOOS=linux GOARCH=amd64 $(GO) test -c ./internal/tunnels/interface -o .tmp/platform-smoke/interface-linux-amd64.test
+	GOOS=darwin GOARCH=arm64 $(GO) test -c ./internal/tunnels/interface -o .tmp/platform-smoke/interface-darwin-arm64.test
+	GOOS=windows GOARCH=amd64 $(GO) test -c ./internal/tunnels/interface -o .tmp/platform-smoke/interface-windows-amd64.test.exe

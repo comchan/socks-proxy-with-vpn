@@ -94,3 +94,23 @@ func TestShutdownTimeoutDefaultsAndValidates(t *testing.T) {
 		t.Fatalf("error = %v, want shutdown timeout rejection", err)
 	}
 }
+
+func TestValidateAttachedVPNProfileRequiresInterfaceAndTunnelDNS(t *testing.T) {
+	cfg := Config{
+		Listeners: []ListenerConfig{{ID: "vpn", Protocol: "socks5", Profile: "wg"}},
+		Profiles: []ProfileConfig{{
+			ID:        "wg",
+			Backend:   "wireguard",
+			Mode:      "attached-interface",
+			Interface: "wg0",
+			DNS:       DNSConfig{Mode: "remote-tcp", Servers: []string{"10.0.0.53:53"}},
+		}},
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	cfg.Profiles[0].Mode = "managed-process"
+	if err := cfg.Validate(); err == nil || !strings.Contains(err.Error(), "attached-interface") {
+		t.Fatalf("error = %v, want attached-interface rejection", err)
+	}
+}

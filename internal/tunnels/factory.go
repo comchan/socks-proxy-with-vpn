@@ -7,6 +7,7 @@ import (
 
 	"github.com/comchan/socks-proxy-thru-wireguard/internal/config"
 	"github.com/comchan/socks-proxy-thru-wireguard/internal/egress"
+	interfacebackend "github.com/comchan/socks-proxy-thru-wireguard/internal/tunnels/interface"
 	sshbackend "github.com/comchan/socks-proxy-thru-wireguard/internal/tunnels/ssh"
 )
 
@@ -17,7 +18,7 @@ func NewConnector(ctx context.Context, profile config.ProfileConfig) (egress.Con
 	case "ssh":
 		return sshbackend.New(ctx, profile)
 	case "openvpn", "wireguard":
-		return nil, fmt.Errorf("tunnel backend %q is not implemented yet", profile.Backend)
+		return interfacebackend.New(ctx, profile)
 	default:
 		return nil, fmt.Errorf("unknown tunnel backend %q", profile.Backend)
 	}

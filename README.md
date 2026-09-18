@@ -4,16 +4,16 @@ A cross-platform Go CLI daemon that will expose HTTP, SOCKS4a, and SOCKS5 proxy 
 
 ## Status
 
-The repository is currently at **M3 — SSH tunnel backend**. The proxy gateway, policy layer, listener lifecycle, and SSH direct-tcpip connector are implemented; OpenVPN and WireGuard adapters arrive in later milestones.
+The repository is currently at **M4 — OpenVPN and WireGuard attached interfaces**. The proxy gateway, policy layer, listener lifecycle, SSH connector, and interface-bound VPN connector are implemented; managed native VPN processes arrive in M5.
 
-Implemented in M3:
+Implemented in M4:
 
-- Strict SSH `known_hosts` verification; missing or mismatched host keys fail closed.
-- Private-key authentication from a file path; passwords and static credentials are not accepted.
-- Context-aware SSH connection and direct-tcpip dialing.
-- Remote hostname preservation for SSH-side resolution.
-- Explicit typed rejection of UDP for standard SSH forwarding.
-- Disposable in-memory SSH server tests and an optional Docker/OpenSSH integration test.
+- OpenVPN and WireGuard attached-interface connectors.
+- TCP and UDP sockets bound to a configured VPN local address.
+- Interface readiness checks for named interfaces.
+- Explicit tunnel DNS resolution with no system-DNS fallback.
+- Fail-closed behavior when an interface, address, or DNS server is unavailable.
+- Linux fail-closed integration coverage and Linux/macOS/Windows cross-compilation smoke checks.
 
 ## Requirements
 
@@ -31,9 +31,10 @@ The required Go tool and linter versions are recorded in `go.mod` and `.golangci
 make check
 make smoke
 make integration-ssh
+make platform-smoke
 ```
 
-`make integration-ssh` is optional and requires a running Docker engine; it launches a disposable `linuxserver/openssh-server` container with TCP forwarding enabled.
+`make integration-ssh` is optional and requires a running Docker engine; it launches a disposable `linuxserver/openssh-server` container with TCP forwarding enabled. `make platform-smoke` cross-compiles the attached-interface package for Linux amd64, macOS arm64, and Windows amd64.
 
 Equivalent direct commands:
 

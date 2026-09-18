@@ -65,11 +65,41 @@ listeners:
 profiles:
   - id: corporate
     backend: wireguard
+    mode: attached-interface
+    interface: wg0
 ```
 
 Do not place passwords, private keys, OpenVPN profiles, or WireGuard configurations in this file. `passwordEnv` names an environment variable whose value is read only at daemon construction and is never logged.
 
-## Routing
+## Attached OpenVPN and WireGuard profiles
+
+M4 uses an already-established operating-system VPN interface. It does not launch a GUI or native VPN process and does not create routes. The profile must use `mode: attached-interface` and provide either an interface name or an explicit local address:
+
+```yaml
+profiles:
+  - id: corp-wireguard
+    backend: wireguard
+    mode: attached-interface
+    interface: wg0
+    dns:
+      mode: remote-tcp
+      servers:
+        - 10.0.0.53:53
+
+  - id: corp-openvpn
+    backend: openvpn
+    mode: attached-interface
+    localAddress: 10.8.0.2
+    dns:
+      mode: tunnel
+      servers:
+        - 10.8.0.1:53
+```
+
+TCP sockets bind their local address to the selected interface address. UDP associations bind packet sockets the same way. If an interface is missing, down, or has no usable address, connector construction fails; there is no direct-egress fallback.
+
+`dns.mode` must be explicit when DNS resolution is needed. Supported modes are `remote-tcp` and `tunnel`, both requiring `dns.servers`. If no tunnel DNS server is configured, hostname resolution fails closed instead of using the host operating system resolver.
+
 
 A listener has a fixed `profile` or ordered `routes`. Rules are evaluated in order:
 
@@ -90,8 +120,12 @@ listeners:
 profiles:
   - id: corporate
     backend: wireguard
+    mode: attached-interface
+    interface: wg0
   - id: privacy
     backend: openvpn
+    mode: attached-interface
+    localAddress: 10.9.0.2
 ```
 
 CIDR rules apply only to IP-literal destinations. Hostname routing should use `domainSuffix`; resolving arbitrary hostnames locally merely to select a CIDR route can leak DNS. There may be only one default route.
@@ -108,4 +142,4 @@ Destination ACLs evaluate explicit denies, then explicit allows, then the defaul
 
 ## Current scope
 
-M2 provides strict configuration validation, policy construction, TLS/mTLS listener setup, authentication, dynamic profile selection, and daemon lifecycle primitives. M3 will add real SSH tunnel connectors; M4 and M5 add OpenVPN/WireGuard interface and managed-client support.
+M4 provides strict configuration validation for attached VPN profiles, policy construction, TLS/mTLS listener setup, authentication, dynamic profile selection, daemon lifecycle, and interface-bound OpenVPN/WireGuard TCP/UDP/DNS egress. M5 will add managed native VPN client processes.
