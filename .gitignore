@@ -1,0 +1,20 @@
+# Go build and test output
+/bin/
+*.test
+*.out
+coverage/
+
+# Local configuration and credentials
+.env
+.env.*
+*.ovpn
+*.conf
+*.key
+
+# Editor and OS metadata
+.DS_Store
+.idea/
+.vscode/
+
+# Local development tools
+.tmp/

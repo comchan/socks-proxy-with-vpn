@@ -174,13 +174,24 @@ profiles:
 
 | ID | Milestone | Status | Required branch | Required validation | Commit |
 |---|---|---|---|---|---|
-| M0 | Foundation and Go project scaffold | Planned | `milestone/m0-foundation-project-scaffold` | Go 1.24+ toolchain check, `go vet ./...`, `go test ./...`, pinned linter, CLI smoke test | — |
+| M0 | Foundation and Go project scaffold | Achieved | `milestone/m0-foundation-project-scaffold` | Go 1.24+ toolchain check, `go vet ./...`, `go test ./...`, pinned linter, CLI smoke test | pending milestone commit |
 | M1 | HTTP and SOCKS gateway core | Planned | `milestone/m1-http-socks-gateway-core` | TCP and UDP-association protocol fixtures, duplex/backpressure tests, error mapping tests | — |
 | M2 | Policy, configuration, and daemon lifecycle | Planned | `milestone/m2-policy-config-lifecycle` | Config rejection tests, TLS/auth/ACL tests, dynamic-routing tests, graceful shutdown test | — |
 | M3 | SSH tunnel backend | Planned | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | — |
 | M4 | OpenVPN and WireGuard attached interfaces | Planned | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | — |
 | M5 | Managed OpenVPN and WireGuard clients | Planned | `milestone/m5-managed-vpn-clients` | Client lifecycle tests, readiness parsing tests, missing-capability failure tests | — |
 | M6 | Packaging, release, and hardening | Planned | `milestone/m6-packaging-release-hardening` | Platform matrix build, SBOM/license audit, load/failure tests | — |
+
+### M0 — Foundation and Go project scaffold
+
+- Status: Achieved
+- Branch: `milestone/m0-foundation-project-scaffold`
+- Commit: pending milestone commit
+- Completed: `2026-09-18T09:54:43Z`
+- Validation:
+  - `make check` — passed Go version gate, formatting, tests, `go vet`, and pinned `golangci-lint` with 0 issues.
+  - `make smoke` — printed `vpnfront dev`.
+- Notes: Added a testable CLI seam, Go module metadata, repository validation targets, ignored local VPN credentials, and foundation documentation. Proxy protocols and tunnel adapters remain outside M0.
 
 ### Milestone completion record template
 
