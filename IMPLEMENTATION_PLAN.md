@@ -90,8 +90,8 @@ The core seam is the egress connector. Frontend protocol modules ask it for a TC
 ```go
 type EgressConnector interface {
 	OpenTCP(ctx context.Context, destination Destination) (net.Conn, error)
-	OpenUDP(ctx context.Context, destination Destination) (net.PacketConn, error)
-	Resolve(ctx context.Context, hostname string) ([]netip.Addr, error)
+	OpenUDP(ctx context.Context) (net.PacketConn, error)
+	Resolve(ctx context.Context, hostname string) ([]net.IP, error)
 }
 
 type TunnelSession interface {
@@ -175,7 +175,7 @@ profiles:
 | ID | Milestone | Status | Required branch | Required validation | Commit |
 |---|---|---|---|---|---|
 | M0 | Foundation and Go project scaffold | Achieved | `milestone/m0-foundation-project-scaffold` | Go 1.24+ toolchain check, `go vet ./...`, `go test ./...`, pinned linter, CLI smoke test | `fd26eeba3f8787277da83f0b2071e21bd139b666` |
-| M1 | HTTP and SOCKS gateway core | Planned | `milestone/m1-http-socks-gateway-core` | TCP and UDP-association protocol fixtures, duplex/backpressure tests, error mapping tests | — |
+| M1 | HTTP and SOCKS gateway core | Achieved | `milestone/m1-http-socks-gateway-core` | TCP and UDP-association protocol fixtures, duplex/backpressure tests, error mapping tests | pending milestone commit |
 | M2 | Policy, configuration, and daemon lifecycle | Planned | `milestone/m2-policy-config-lifecycle` | Config rejection tests, TLS/auth/ACL tests, dynamic-routing tests, graceful shutdown test | — |
 | M3 | SSH tunnel backend | Planned | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | — |
 | M4 | OpenVPN and WireGuard attached interfaces | Planned | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | — |
@@ -192,6 +192,18 @@ profiles:
   - `make check` — passed Go version gate, formatting, tests, `go vet`, and pinned `golangci-lint` with 0 issues.
   - `make smoke` — printed `vpnfront dev`.
 - Notes: Added a testable CLI seam, Go module metadata, repository validation targets, ignored local VPN credentials, and foundation documentation. Proxy protocols and tunnel adapters remain outside M0.
+
+### M1 — HTTP and SOCKS gateway core
+
+- Status: Achieved
+- Branch: `milestone/m1-http-socks-gateway-core`
+- Commit: pending milestone commit
+- Completed: `2026-09-18T10:10:01Z`
+- Validation:
+  - `make check` — passed Go version gate, formatting, `go test ./...`, `go vet ./...`, and pinned `golangci-lint` with 0 issues.
+  - `go test -race ./...` — passed concurrent relay and UDP-association race checks.
+  - `make smoke` — printed `vpnfront dev`.
+- Notes: Added HTTP forward/CONNECT, SOCKS4/SOCKS4a, SOCKS5 CONNECT/UDP ASSOCIATE, typed egress failures, profile-scoped UDP DNS resolution, bidirectional relay, and fake-connector protocol fixtures. Authentication, policy, listener lifecycle, and real tunnel adapters remain outside M1.
 
 ### Milestone completion record template
 

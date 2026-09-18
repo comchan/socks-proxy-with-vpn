@@ -4,7 +4,17 @@ A cross-platform Go CLI daemon that will expose HTTP, SOCKS4a, and SOCKS5 proxy 
 
 ## Status
 
-The repository is currently at **M0 — Foundation and Go project scaffold**. The CLI is intentionally a small, testable shell; proxy protocols and tunnel adapters arrive in later milestones.
+The repository is currently at **M1 — HTTP and SOCKS gateway core**. The protocol handlers are implemented against a small egress connector seam; listener lifecycle, authentication, policy, and real tunnel backends arrive in later milestones.
+
+Implemented in M1:
+
+- HTTP forward proxy with origin-form upstream requests.
+- HTTP `CONNECT` TCP tunnelling.
+- SOCKS4 and SOCKS4a `CONNECT`.
+- SOCKS5 unauthenticated negotiation and `CONNECT`.
+- SOCKS5 `UDP ASSOCIATE`, including IPv4, IPv6, and domain targets through profile-scoped resolution.
+- Explicit rejection of SOCKS5 `BIND`, unsupported authentication, and fragmented UDP datagrams.
+- Bidirectional relay with cancellation and half-close handling.
 
 ## Requirements
 
