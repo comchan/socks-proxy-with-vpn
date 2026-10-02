@@ -183,6 +183,7 @@ profiles:
 | M5 | Managed OpenVPN and WireGuard clients | Achieved | `milestone/m5-managed-vpn-clients` | Client lifecycle tests, readiness parsing tests, missing-capability failure tests | `b147abb82b19b5e845b49f1fe742aa160335c52c` |
 | M6 | Packaging, release, and hardening | Achieved | `milestone/m6-packaging-release-hardening` | Platform matrix build, SBOM/license audit, load/failure tests | `378ad42a994930f18d0b6683e3324621d2789665` |
 | M7 | Proxy-only userspace WireGuard | Achieved | `milestone/m7-proxy-only-userspace-wireguard` | Standard WireGuard config parsing, in-process TCP/UDP/DNS egress, host-route isolation, no-direct-fallback and cross-platform tests | `c0fa277` |
+| M8 | CLI daemon start command | Achieved | `milestone/m8-daemon-start-command` | Start configured listeners and tunnel backends, readiness output, SIGINT/SIGTERM shutdown, CLI lifecycle tests | `f3102ea08474d9e693080f0a70e92b23085df85c` |
 
 ### M0 — Foundation and Go project scaffold
 
@@ -323,3 +324,25 @@ These decisions do not block M0–M2, but must be confirmed before the related m
 2. Whether SSH profiles need UDP support via a separately deployed remote relay or SSH TUN mode.
 3. Whether dynamic routing needs hostname-to-CIDR selection through an explicit pre-routing DNS policy, in addition to CIDR/IP and domain-suffix rules.
 4. Whether the product needs a GUI or service installer after the CLI is stable.
+
+### M8 — CLI daemon start command
+
+- Status: Achieved
+- Branch: `milestone/m8-daemon-start-command`
+- Commit: `f3102ea08474d9e693080f0a70e92b23085df85c`
+- Completed: `2026-10-02T18:29:00Z`
+- Scope:
+  - Added `vpnfront start --config <path>` for YAML/JSON daemon configuration.
+  - Added signal-aware process lifecycle in `cmd/vpnfront/main.go` for SIGINT and SIGTERM.
+  - Loads and validates all configuration before constructing tunnel backends or binding listeners.
+  - Reports readiness and each configured listener address.
+  - Waits for cancellation and performs bounded graceful shutdown using `shutdownTimeout`.
+  - Added unit coverage for missing config, listener startup, readiness output, cancellation, and shutdown.
+  - Documented start and shutdown behavior in the README and configuration reference.
+- Validation:
+  - `make check` — passed Go version gate, formatting, tests, `go vet`, and pinned `golangci-lint` with 0 issues.
+  - `go test -race ./... -count=1 -timeout 180s` — passed repository race checks.
+  - `make platform-smoke` — passed Linux amd64, macOS arm64, and Windows amd64 cross-compilation.
+  - `make integration-ssh` — passed disposable Docker/OpenSSH forwarding regression.
+  - Real `vpnfront start --config` test with `/Users/comchan/Downloads/kr203-nordvpn.conf` — HTTP and SOCKS5 both returned `187.15.98.34`, `KR`, Seoul; SIGTERM shutdown and host route/interface invariance passed.
+- Notes: The start command is now the supported CLI entry point for running the proxy daemon; GUI and service packaging remain deferred.
