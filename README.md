@@ -1,40 +1,50 @@
 # VPN Frontend Proxy
 
-A cross-platform Go CLI daemon that will expose HTTP, SOCKS4a, and SOCKS5 proxy listeners and route traffic through SSH, WireGuard, or OpenVPN profiles.
+A cross-platform Go CLI daemon that exposes HTTP, SOCKS4a, and SOCKS5 proxy listeners and routes TCP and supported UDP traffic through SSH, WireGuard, or OpenVPN profiles.
 
 ## Status
 
-The repository is currently at **M5 — managed OpenVPN and WireGuard clients**. The proxy gateway, policy layer, listener lifecycle, SSH connector, attached-interface connector, and managed VPN process supervisor are implemented; packaging hardening remains for M6.
+The repository is at **M6 — packaging, release, and hardening**. The proxy gateway, policy layer, listener lifecycle, SSH connector, attached-interface connector, managed VPN process supervisor, release packaging, dependency audit, and concurrent failure tests are implemented.
 
-Implemented in M5:
+Implemented in M6:
 
-- Explicit no-shell process commands for OpenVPN and WireGuard.
-- OpenVPN readiness detection using `Initialization Sequence Completed` plus interface readiness.
-- Unix `wg-quick up/down` lifecycle and Windows WireGuard tunnel-service lifecycle plans.
-- Bounded startup timeout and cleanup on readiness/interface failure.
-- Managed connectors delegate TCP, UDP, and DNS to the M4 interface-bound connector after readiness.
-- Deterministic fake-runner tests for lifecycle, readiness, timeout, command safety, and missing capabilities.
+- Reproducible six-target release archives for Darwin, Linux, and Windows on amd64 and arm64.
+- Version, commit, and UTC build-date metadata embedded through Go linker flags.
+- SHA-256 manifest generation for every release archive.
+- CycloneDX 1.5 SBOM generation and dependency-license checks with module-cache download support.
+- Concurrent gateway load coverage and a regression proving tunnel failures never fall back to direct egress.
+- Make targets for `release`, `sbom`, `license-audit`, `build-release`, and `load-test`.
 
 ## Requirements
 
 - Go 1.24 or newer
 - `make`
+- Python 3 for SBOM/license auditing
 - `golangci-lint` 2.13.2
-- Docker Desktop for integration tests introduced in later milestones
-- OpenVPN and WireGuard tooling for platform-specific VPN tests introduced in later milestones
+- Docker Desktop for the optional OpenSSH integration test
+- OpenVPN and WireGuard tooling for platform-specific VPN tests
 
-The required Go tool and linter versions are recorded in `go.mod` and `.golangci-version`.
+The required Go and linter versions are recorded in `go.mod` and `.golangci-version`.
 
-## Validate the foundation
+## Validate and package
 
 ```sh
 make check
 make smoke
+make load-test
 make integration-ssh
 make platform-smoke
+make release
 ```
 
 `make integration-ssh` is optional and requires a running Docker engine; it launches a disposable `linuxserver/openssh-server` container with TCP forwarding enabled. `make platform-smoke` cross-compiles the attached-interface package for Linux amd64, macOS arm64, and Windows amd64.
+
+`make release` writes six archives and `SHA256SUMS` under `dist/`, then `make sbom` and `make license-audit` write `dist/sbom.cdx.json` and `dist/license-audit.txt`. Override release metadata and output location when needed:
+
+```sh
+VERSION=0.1.0 COMMIT=$(git rev-parse --short=12 HEAD) make build-release
+OUT_DIR=dist/release-check VERSION=0.1.0 make build-release
+```
 
 Managed VPN process tests use deterministic fake runners; they do not launch OpenVPN or WireGuard during the normal test suite. Validate the configured executable and profile manually on the target host before enabling managed mode.
 
@@ -42,12 +52,13 @@ Equivalent direct commands:
 
 ```sh
 go test ./...
+go test -race ./... -count=1
 go vet ./...
 golangci-lint run ./...
 go run ./cmd/vpnfront --version
 ```
 
-Expected smoke output:
+Expected development smoke output:
 
 ```text
 vpnfront dev
@@ -63,4 +74,4 @@ See [`docs/configuration.md`](docs/configuration.md) for listener security, auth
 
 ## Design direction
 
-The proxy data plane will depend on a small egress connector interface. Protocol handlers will request TCP connections, UDP packet sockets, or profile-scoped DNS resolution without knowing whether the selected profile uses SSH, WireGuard, or OpenVPN. A selected tunnel is fail-closed: it never silently falls back to direct egress.
+The proxy data plane depends on a small egress connector interface. Protocol handlers request TCP connections, UDP packet sockets, or profile-scoped DNS resolution without knowing whether the selected profile uses SSH, WireGuard, or OpenVPN. A selected tunnel is fail-closed: it never silently falls back to direct egress.

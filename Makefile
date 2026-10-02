@@ -4,7 +4,7 @@ GO ?= go
 GOLANGCI_LINT ?= golangci-lint
 GOLANGCI_LINT_VERSION := 2.13.2
 
-.PHONY: go-version fmt test vet lint check smoke integration-ssh platform-smoke
+.PHONY: go-version fmt test vet lint check smoke integration-ssh platform-smoke sbom license-audit build-release release load-test
 
 go-version:
 	@version="$$($(GO) env GOVERSION | sed 's/^go//')"; \
@@ -43,3 +43,17 @@ platform-smoke:
 	GOOS=linux GOARCH=amd64 $(GO) test -c ./internal/tunnels/interface -o .tmp/platform-smoke/interface-linux-amd64.test
 	GOOS=darwin GOARCH=arm64 $(GO) test -c ./internal/tunnels/interface -o .tmp/platform-smoke/interface-darwin-arm64.test
 	GOOS=windows GOARCH=amd64 $(GO) test -c ./internal/tunnels/interface -o .tmp/platform-smoke/interface-windows-amd64.test.exe
+
+sbom:
+	python3 scripts/dependency-audit.py --output-dir dist
+
+license-audit:
+	python3 scripts/dependency-audit.py --output-dir dist --check
+
+build-release:
+	sh scripts/build-release.sh
+
+release: build-release sbom license-audit
+
+load-test:
+	$(GO) test ./internal/gateway -run 'TestGateway(LoadRelaysConcurrentHTTPConnects|FailureNeverFallsBackToDirectEgress)' -count=1 -timeout 30s

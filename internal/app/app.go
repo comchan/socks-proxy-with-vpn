@@ -57,7 +57,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 0
 	}
 	if *showVersion {
-		if !writef(stdout, "vpnfront %s\n", version.Value) {
+		if !writef(stdout, "vpnfront %s\n", version.String()) {
 			return 1
 		}
 		return 0
