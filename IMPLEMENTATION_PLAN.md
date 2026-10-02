@@ -180,7 +180,7 @@ profiles:
 | M3 | SSH tunnel backend | Achieved | `milestone/m3-ssh-tunnel-backend` | Disposable OpenSSH integration test, strict host-key rejection test, explicit UDP-capability rejection test | `93ddb52a07b2d01caeaf0d9d7c0672a2656a4a98` |
 | M4 | OpenVPN and WireGuard attached interfaces | Achieved | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | `69a5390b3326fd30edbaa220f9e1a1c37eefcb2b` |
 | M5 | Managed OpenVPN and WireGuard clients | Achieved | `milestone/m5-managed-vpn-clients` | Client lifecycle tests, readiness parsing tests, missing-capability failure tests | `b147abb82b19b5e845b49f1fe742aa160335c52c` |
-| M6 | Packaging, release, and hardening | Planned | `milestone/m6-packaging-release-hardening` | Platform matrix build, SBOM/license audit, load/failure tests | — |
+| M6 | Packaging, release, and hardening | Achieved | `milestone/m6-packaging-release-hardening` | Platform matrix build, SBOM/license audit, load/failure tests | `378ad42a994930f18d0b6683e3324621d2789665` |
 
 ### M0 — Foundation and Go project scaffold
 
@@ -258,6 +258,22 @@ profiles:
   - `make platform-smoke` — passed Linux amd64, macOS arm64, and Windows amd64 attached-interface cross-compilation.
   - Managed fake-runner tests passed command safety, OpenVPN readiness, WireGuard up/down lifecycle, startup timeout, cleanup, and missing-interface checks.
 - Notes: Added explicit no-shell command planning, process supervision, readiness parsing, bounded startup/cleanup, managed OpenVPN and platform-specific WireGuard lifecycle, and factory wiring. M6 remains for packaging and release hardening.
+
+### M6 — Packaging, release, and hardening
+
+- Status: Achieved
+- Branch: `milestone/m6-packaging-release-hardening`
+- Commit: `378ad42a994930f18d0b6683e3324621d2789665`
+- Completed: `2026-10-02T11:12:34Z`
+- Validation:
+  - `make check` — passed Go version gate, formatting, all package tests, `go vet`, and pinned `golangci-lint` with 0 issues.
+  - `go test -race ./... -count=1 -timeout 180s` — passed repository race checks.
+  - `make integration-ssh` — passed disposable Docker/OpenSSH forwarding regression.
+  - `make platform-smoke` — cross-compiled attached-interface tests for Linux amd64, macOS arm64, and Windows amd64.
+  - `make load-test` — passed concurrent relay load and fail-closed no-direct-fallback tests.
+  - `make release` — produced six Darwin/Linux/Windows amd64/arm64 archives, `SHA256SUMS`, CycloneDX SBOM, and license report.
+  - `make license-audit` — passed with all seven Go dependencies identified as BSD-3-Clause or Apache-2.0.
+- Notes: Added reproducible release metadata and archives, dependency SBOM/license auditing, release Make targets, and concurrent hardening tests. Release artifacts remain generated and ignored under `dist/`; real privileged VPN-client execution remains target-host validation work.
 
 ### Milestone completion record template
 
