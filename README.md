@@ -26,6 +26,25 @@ Implemented in M6:
 
 The required Go and linter versions are recorded in `go.mod` and `.golangci-version`.
 
+## Usage
+
+1. Create a daemon YAML or JSON configuration with one or more proxy listeners and tunnel profiles. The repository includes a safe template at [`examples/wireguard-userspace-proxies.yaml`](examples/wireguard-userspace-proxies.yaml); replace its placeholder `configPath` with the path to your local WireGuard configuration.
+2. Validate the daemon configuration:
+
+   ```sh
+   vpnfront --validate-config /path/to/proxy.yaml
+   ```
+
+3. Start the proxy daemon:
+
+   ```sh
+   vpnfront start --config /path/to/proxy.yaml
+   ```
+
+   The command prints the listener addresses and stays in the foreground. Press `Ctrl-C` or send `SIGTERM` to stop it gracefully. The configured `shutdownTimeout` bounds shutdown when active connections do not close promptly.
+
+For a proxy-only userspace WireGuard profile, `configPath` refers to the native `.conf` file consumed by the in-process backend. That file, private keys, OpenVPN profiles, and other personal VPN configuration must remain outside the repository and should never be committed.
+
 ## Validate and package
 
 ```sh

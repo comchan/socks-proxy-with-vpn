@@ -344,5 +344,5 @@ These decisions do not block M0–M2, but must be confirmed before the related m
   - `go test -race ./... -count=1 -timeout 180s` — passed repository race checks.
   - `make platform-smoke` — passed Linux amd64, macOS arm64, and Windows amd64 cross-compilation.
   - `make integration-ssh` — passed disposable Docker/OpenSSH forwarding regression.
-  - Real `vpnfront start --config` test with `/Users/comchan/Downloads/kr203-nordvpn.conf` — HTTP and SOCKS5 both returned `187.15.98.34`, `KR`, Seoul; SIGTERM shutdown and host route/interface invariance passed.
+  - Real `vpnfront start --config` test with the supplied native WireGuard configuration — HTTP and SOCKS5 both returned a KR/Seoul egress; SIGTERM shutdown and host route/interface invariance passed.
 - Notes: The start command is now the supported CLI entry point for running the proxy daemon; GUI and service packaging remain deferred.
