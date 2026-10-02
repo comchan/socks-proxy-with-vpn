@@ -255,14 +255,14 @@ func validateProfile(prefix string, profile ProfileConfig) []string {
 	}
 	var problems []string
 	mode := strings.ToLower(strings.TrimSpace(profile.Mode))
-	if mode != "attached-interface" && mode != "managed-process" {
-		problems = append(problems, prefix+".mode must be attached-interface or managed-process for OpenVPN/WireGuard")
+	if mode != "attached-interface" && mode != "managed-process" && mode != "userspace-netstack" {
+		problems = append(problems, prefix+".mode must be attached-interface, managed-process, or userspace-netstack for OpenVPN/WireGuard")
 	}
-	if strings.TrimSpace(profile.Interface) == "" && strings.TrimSpace(profile.LocalAddress) == "" {
+	if (mode == "attached-interface" || mode == "managed-process") && strings.TrimSpace(profile.Interface) == "" && strings.TrimSpace(profile.LocalAddress) == "" {
 		problems = append(problems, prefix+" requires interface or localAddress for VPN egress readiness")
 	}
-	if mode == "managed-process" && strings.TrimSpace(profile.ConfigPath) == "" {
-		problems = append(problems, prefix+".configPath is required for managed-process mode")
+	if (mode == "managed-process" || mode == "userspace-netstack") && strings.TrimSpace(profile.ConfigPath) == "" {
+		problems = append(problems, prefix+".configPath is required for "+mode+" mode")
 	}
 	if profile.LocalAddress != "" && net.ParseIP(strings.TrimSpace(profile.LocalAddress)) == nil {
 		problems = append(problems, prefix+".localAddress must be an IP address")

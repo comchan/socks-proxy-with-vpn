@@ -41,8 +41,11 @@ integration-ssh:
 platform-smoke:
 	@mkdir -p .tmp/platform-smoke
 	GOOS=linux GOARCH=amd64 $(GO) test -c ./internal/tunnels/interface -o .tmp/platform-smoke/interface-linux-amd64.test
+	GOOS=linux GOARCH=amd64 $(GO) test -c ./internal/tunnels/userspace -o .tmp/platform-smoke/userspace-linux-amd64.test
 	GOOS=darwin GOARCH=arm64 $(GO) test -c ./internal/tunnels/interface -o .tmp/platform-smoke/interface-darwin-arm64.test
+	GOOS=darwin GOARCH=arm64 $(GO) test -c ./internal/tunnels/userspace -o .tmp/platform-smoke/userspace-darwin-arm64.test
 	GOOS=windows GOARCH=amd64 $(GO) test -c ./internal/tunnels/interface -o .tmp/platform-smoke/interface-windows-amd64.test.exe
+	GOOS=windows GOARCH=amd64 $(GO) test -c ./internal/tunnels/userspace -o .tmp/platform-smoke/userspace-windows-amd64.test.exe
 
 sbom:
 	python3 scripts/dependency-audit.py --output-dir dist

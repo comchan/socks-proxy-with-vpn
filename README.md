@@ -4,7 +4,7 @@ A cross-platform Go CLI daemon that exposes HTTP, SOCKS4a, and SOCKS5 proxy list
 
 ## Status
 
-The repository is at **M6 — packaging, release, and hardening**. The proxy gateway, policy layer, listener lifecycle, SSH connector, attached-interface connector, managed VPN process supervisor, release packaging, dependency audit, and concurrent failure tests are implemented.
+The repository is implementing **M7 — proxy-only userspace WireGuard** on top of the completed M6 packaging baseline. The proxy gateway, policy layer, listener lifecycle, SSH connector, attached-interface connector, managed VPN process supervisor, and release hardening are implemented. M7 adds standard WireGuard config parsing and an in-process TCP/UDP/DNS tunnel that does not modify host routes.
 
 Implemented in M6:
 
@@ -37,7 +37,7 @@ make platform-smoke
 make release
 ```
 
-`make integration-ssh` is optional and requires a running Docker engine; it launches a disposable `linuxserver/openssh-server` container with TCP forwarding enabled. `make platform-smoke` cross-compiles the attached-interface package for Linux amd64, macOS arm64, and Windows amd64.
+`make integration-ssh` is optional and requires a running Docker engine; it launches a disposable `linuxserver/openssh-server` container with TCP forwarding enabled. `make platform-smoke` cross-compiles the attached-interface and userspace WireGuard packages for Linux amd64, macOS arm64, and Windows amd64.
 
 `make release` writes six archives and `SHA256SUMS` under `dist/`, then `make sbom` and `make license-audit` write `dist/sbom.cdx.json` and `dist/license-audit.txt`. Override release metadata and output location when needed:
 

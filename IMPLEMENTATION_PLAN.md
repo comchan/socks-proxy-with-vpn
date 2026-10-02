@@ -34,12 +34,13 @@ The Go standard library owns the proxy data plane and lifecycle. Platform-specif
 | WireGuard | TCP sockets and UDP datagrams through an established WireGuard interface. | Yes | Yes | A TUN/Wintun/utun-style interface, routes, and often elevated privileges remain necessary. |
 | OpenVPN | TCP sockets and UDP datagrams through an established OpenVPN tunnel interface. | Yes | Yes | A TUN/TAP-style interface, routes, and often elevated privileges remain necessary. |
 
-OpenVPN and WireGuard have two supported operation modes:
+OpenVPN and WireGuard have three supported operation modes:
 
 1. **Attached-interface mode**: a native VPN client owns an existing tunnel and the daemon verifies and uses that interface.
-2. **Managed-process mode**: the daemon launches and supervises an approved native VPN client without shell execution.
+2. **Managed-process mode**: the daemon launches and supervises an approved native VPN client without shell execution. This mode may install host routes from the native client configuration.
+3. **Userspace-netstack mode (WireGuard)**: the daemon reads a standard WireGuard configuration and runs WireGuard plus its IP/TCP/UDP stack in-process. This mode does not create a host interface or modify host routes; `AllowedIPs` apply only inside the userspace stack.
 
-Neither mode removes the virtual-interface requirement: embedding a VPN protocol implementation avoids a separate GUI client, but it still needs OS-level packet routing through TUN, Wintun, or utun facilities. Attached-interface mode ships before managed-process mode.
+Neither attached-interface nor managed-process mode provides host-route isolation: they rely on operating-system VPN routing. Userspace-netstack mode is the proxy-only path and does not require a virtual-interface privilege. Attached-interface mode remains useful when an existing system VPN must be reused, while managed-process mode remains an explicit compatibility option.
 
 ### Security and reliability invariants
 
@@ -181,6 +182,7 @@ profiles:
 | M4 | OpenVPN and WireGuard attached interfaces | Achieved | `milestone/m4-vpn-attached-interface` | Privileged Linux TCP/UDP no-direct-fallback test; Windows/macOS capability smoke tests | `69a5390b3326fd30edbaa220f9e1a1c37eefcb2b` |
 | M5 | Managed OpenVPN and WireGuard clients | Achieved | `milestone/m5-managed-vpn-clients` | Client lifecycle tests, readiness parsing tests, missing-capability failure tests | `b147abb82b19b5e845b49f1fe742aa160335c52c` |
 | M6 | Packaging, release, and hardening | Achieved | `milestone/m6-packaging-release-hardening` | Platform matrix build, SBOM/license audit, load/failure tests | `378ad42a994930f18d0b6683e3324621d2789665` |
+| M7 | Proxy-only userspace WireGuard | Implementing | `milestone/m7-proxy-only-userspace-wireguard` | Standard WireGuard config parsing, in-process TCP/UDP/DNS egress, host-route isolation, no-direct-fallback and cross-platform tests | — |
 
 ### M0 — Foundation and Go project scaffold
 
@@ -275,8 +277,26 @@ profiles:
   - `make license-audit` — passed with all seven Go dependencies identified as BSD-3-Clause or Apache-2.0.
 - Notes: Added reproducible release metadata and archives, dependency SBOM/license auditing, release Make targets, and concurrent hardening tests. Release artifacts remain generated and ignored under `dist/`; real privileged VPN-client execution remains target-host validation work.
 
-### Milestone completion record template
+### M7 — Proxy-only userspace WireGuard
 
+- Status: Implementing
+- Branch: `milestone/m7-proxy-only-userspace-wireguard`
+- Commit: —
+- Scope:
+  - Added strict parsing of standard WireGuard `[Interface]` and `[Peer]` configuration files, including base64 keys, addresses, DNS, endpoints, `AllowedIPs`, MTU, listen port, and keepalive.
+  - Added `userspace-netstack` mode using the official WireGuard Go device and netstack packages.
+  - Added in-process TCP, dual-stack UDP, and tunnel DNS egress with no operating-system WireGuard interface or route installation.
+  - Added fail-closed behavior for missing tunnel DNS, invalid configuration, endpoint resolution failure, device startup failure, and connector shutdown.
+  - Rejected `Table`, `PreUp`, `PostUp`, `PreDown`, `PostDown`, and `SaveConfig` because userspace mode must not invoke host routing or shell hooks.
+  - Kept attached-interface and managed-process modes as explicit alternatives.
+- Validation completed so far:
+  - `make check` — passed tests, vet, and pinned linter with 0 issues.
+  - In-process WireGuard pair test — passed encrypted TCP and UDP echo plus host-interface snapshot invariance.
+  - `go test -race ./... -count=1 -timeout 180s` — passed.
+  - `make platform-smoke` — passed userspace and attached-interface package cross-compilation for Linux amd64, macOS arm64, and Windows amd64.
+  - `make integration-ssh` — passed inherited Docker/OpenSSH regression.
+  - Userspace example config validation — passed.
+- Notes: Final release/SBOM/license/load checks and the milestone commit remain pending.
 Add this section when completing a milestone:
 
 ```markdown

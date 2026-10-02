@@ -1,0 +1,26 @@
+# vpnfront sample: proxy-only userspace WireGuard.
+#
+# This mode reads the standard WireGuard file at configPath and keeps the
+# tunnel, routes, TCP, UDP, and DNS inside vpnfront. It does not create wg0
+# or change the host default route.
+
+shutdownTimeout: 30s
+
+listeners:
+  - id: wireguard-userspace-socks5
+    protocol: socks5
+    host: 127.0.0.1
+    port: 1080
+    profile: wireguard-userspace
+
+  - id: wireguard-userspace-http
+    protocol: http
+    host: 127.0.0.1
+    port: 8080
+    profile: wireguard-userspace
+
+profiles:
+  - id: wireguard-userspace
+    backend: wireguard
+    mode: userspace-netstack
+    configPath: /Users/replace-me/.config/wireguard/proxy.conf

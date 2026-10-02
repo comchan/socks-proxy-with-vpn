@@ -59,6 +59,8 @@ def detect_license(directory: pathlib.Path) -> tuple[str, str]:
         if not candidate.is_file():
             continue
         text = candidate.read_text(errors="replace")[:12000].upper()
+        if "ISC LICENSE" in text:
+            return "ISC", str(candidate)
         if "APACHE LICENSE" in text:
             return "Apache-2.0", str(candidate)
         if "MIT LICENSE" in text or "PERMISSION IS HEREBY GRANTED" in text:

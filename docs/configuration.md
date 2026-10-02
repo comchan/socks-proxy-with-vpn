@@ -101,6 +101,52 @@ If startup, readiness, interface discovery, or cleanup fails, the connector retu
 
 Do not place passwords, private keys, OpenVPN profiles, or WireGuard configurations in this file. `passwordEnv` names an environment variable whose value is read only at daemon construction and is never logged.
 
+## Proxy-only userspace WireGuard profiles
+
+M7 adds `userspace-netstack` mode for a standard WireGuard configuration file. It runs the WireGuard device and IP/TCP/UDP stack inside the `vpnfront` process. It does **not** create `wg0`, `utun`, Wintun, or another host-visible interface, and it does not install routes in the host routing table.
+
+```yaml
+listeners:
+  - id: wireguard-userspace-socks5
+    protocol: socks5
+    host: 127.0.0.1
+    port: 1080
+    profile: wireguard-userspace
+
+  - id: wireguard-userspace-http
+    protocol: http
+    host: 127.0.0.1
+    port: 8080
+    profile: wireguard-userspace
+
+profiles:
+  - id: wireguard-userspace
+    backend: wireguard
+    mode: userspace-netstack
+    configPath: /Users/me/.config/wireguard/proxy.conf
+```
+
+The referenced file uses the normal WireGuard format:
+
+```ini
+[Interface]
+PrivateKey = <base64-private-key>
+Address = 10.8.0.2/32
+DNS = 10.8.0.1
+
+[Peer]
+PublicKey = <base64-peer-public-key>
+Endpoint = vpn.example.com:51820
+AllowedIPs = 0.0.0.0/0, ::/0
+PersistentKeepalive = 25
+```
+
+In this mode, `AllowedIPs = 0.0.0.0/0, ::/0` applies only to traffic opened through this proxy profile. It does not change the computer's default route or affect unrelated host applications. HTTP, HTTP CONNECT, SOCKS TCP, SOCKS5 UDP, and destination DNS are sent through the userspace tunnel.
+
+The WireGuard endpoint hostname is resolved through the host network because that connection is needed to establish the tunnel itself. Destination hostnames are resolved through the configured WireGuard DNS servers. If tunnel DNS is absent or unavailable, hostname proxying fails closed instead of using the host resolver.
+
+`userspace-netstack` intentionally rejects `Table`, `PreUp`, `PostUp`, `PreDown`, `PostDown`, and `SaveConfig` settings from the WireGuard file because those settings could imply host routing or shell execution. Private keys and configuration files remain external to the proxy YAML and are never logged.
+
 ## Attached OpenVPN and WireGuard profiles
 
 M4 uses an already-established operating-system VPN interface. It does not launch a GUI or native VPN process and does not create routes. The profile must use `mode: attached-interface` and provide either an interface name or an explicit local address:
@@ -172,4 +218,4 @@ Destination ACLs evaluate explicit denies, then explicit allows, then the defaul
 
 ## Current scope
 
-M5 provides strict configuration validation for attached and managed VPN profiles, policy construction, TLS/mTLS listener setup, authentication, dynamic profile selection, daemon lifecycle, and interface-bound or supervised OpenVPN/WireGuard TCP/UDP/DNS egress. M6 will harden packaging and release workflows.
+M7 provides strict standard WireGuard config parsing and a proxy-only `userspace-netstack` backend with in-process TCP/UDP/DNS egress and no host interface or route changes. M5's managed process mode and M4's attached-interface mode remain available as explicit alternatives. Policy construction, TLS/mTLS listener setup, authentication, dynamic profile selection, daemon lifecycle, packaging, and release hardening remain implemented.

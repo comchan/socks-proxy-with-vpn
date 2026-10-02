@@ -114,3 +114,21 @@ func TestValidateAttachedVPNProfileRequiresInterfaceAndTunnelDNS(t *testing.T) {
 		t.Fatalf("error = %v, want managed configPath rejection", err)
 	}
 }
+
+func TestValidateUserspaceWireGuardRequiresConfigButNotInterface(t *testing.T) {
+	cfg := Config{
+		Listeners: []ListenerConfig{{ID: "vpn", Protocol: "socks5", Profile: "wg"}},
+		Profiles: []ProfileConfig{{
+			ID:      "wg",
+			Backend: "wireguard",
+			Mode:    "userspace-netstack",
+		}},
+	}
+	if err := cfg.Validate(); err == nil || !strings.Contains(err.Error(), "configPath") {
+		t.Fatalf("error = %v, want userspace configPath rejection", err)
+	}
+	cfg.Profiles[0].ConfigPath = "proxy.conf"
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("userspace profile with configPath rejected: %v", err)
+	}
+}
