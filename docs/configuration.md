@@ -1,3 +1,14 @@
+
+## Start the daemon
+
+Validate the YAML or JSON daemon configuration first, then start the listeners:
+
+```sh
+vpnfront --validate-config /path/to/proxy.yaml
+vpnfront start --config /path/to/proxy.yaml
+```
+
+`start` constructs every configured tunnel backend before binding listeners. It prints a readiness line and one bound address per listener, then waits for `SIGINT` or `SIGTERM`. Shutdown waits for active connections up to the configured `shutdownTimeout` and then closes remaining connections. A failed tunnel construction or listener bind exits non-zero and does not start a partially configured daemon.
 # Configuration Reference
 
 `vpnfront` accepts strict YAML or JSON configuration. Unknown fields are rejected. Validate a file before using it:
@@ -218,4 +229,4 @@ Destination ACLs evaluate explicit denies, then explicit allows, then the defaul
 
 ## Current scope
 
-M7 provides strict standard WireGuard config parsing and a proxy-only `userspace-netstack` backend with in-process TCP/UDP/DNS egress and no host interface or route changes. M5's managed process mode and M4's attached-interface mode remain available as explicit alternatives. Policy construction, TLS/mTLS listener setup, authentication, dynamic profile selection, daemon lifecycle, packaging, and release hardening remain implemented.
+M8 provides the `vpnfront start --config <path>` CLI command. It loads and validates the complete YAML/JSON daemon configuration, constructs all tunnel backends before binding listeners, reports listener readiness, waits for SIGINT/SIGTERM, and performs bounded graceful shutdown. M7 provides strict standard WireGuard config parsing and a proxy-only `userspace-netstack` backend with in-process TCP/UDP/DNS egress and no host interface or route changes. M5's managed process mode and M4's attached-interface mode remain available as explicit alternatives. Policy construction, TLS/mTLS listener setup, authentication, dynamic profile selection, packaging, and release hardening remain implemented.

@@ -4,7 +4,7 @@ A cross-platform Go CLI daemon that exposes HTTP, SOCKS4a, and SOCKS5 proxy list
 
 ## Status
 
-The repository is implementing **M7 — proxy-only userspace WireGuard** on top of the completed M6 packaging baseline. The proxy gateway, policy layer, listener lifecycle, SSH connector, attached-interface connector, managed VPN process supervisor, and release hardening are implemented. M7 adds standard WireGuard config parsing and an in-process TCP/UDP/DNS tunnel that does not modify host routes.
+The repository now has the CLI daemon start path on top of completed **M7 — proxy-only userspace WireGuard**. The proxy gateway, policy layer, listener lifecycle, SSH connector, attached-interface connector, managed VPN process supervisor, userspace WireGuard backend, and release hardening are implemented. M8 adds `vpnfront start --config` with signal-aware graceful shutdown.
 
 Implemented in M6:
 
@@ -69,6 +69,14 @@ Validate a strict YAML or JSON configuration file before use:
 ```sh
 go run ./cmd/vpnfront --validate-config /path/to/proxy.yaml
 ```
+
+Start the configured listeners and tunnel backends:
+
+```sh
+go run ./cmd/vpnfront start --config /path/to/proxy.yaml
+```
+
+The command prints each bound listener, remains active until `SIGINT` or `SIGTERM`, and then performs bounded graceful shutdown using `shutdownTimeout`. For the proxy-only WireGuard mode, the YAML `configPath` points to the native WireGuard `.conf` file; that file is read by the in-process backend and does not create a host VPN interface or install host routes.
 
 See [`docs/configuration.md`](docs/configuration.md) for listener security, authentication, ACL, and dynamic-routing rules.
 
